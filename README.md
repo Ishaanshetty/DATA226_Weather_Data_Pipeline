@@ -1,5 +1,5 @@
 # DATA226_Weather_Data_Pipeline
-Airflow + dbt weather pipeline: Is NY or LA's weather better?
+
 # NY vs LA: Which Coast Has Better Weather? ☀️🌧️
 
 A scheduled, idempotent data pipeline that pulls daily weather for New York and Los Angeles, transforms it into comparative metrics, and visualizes the results on a dashboard — built to settle the age-old coastal weather debate with data.
