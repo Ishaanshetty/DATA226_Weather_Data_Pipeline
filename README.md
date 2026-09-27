@@ -39,23 +39,15 @@ See `dbt/models/marts/fct_weather_metrics.sql` for full definitions.
 
 ```
 repo/
-├── dags/
-│   ├── weather_etl_dag.py     # pulls Open-Meteo data, loads raw table
-│   └── weather_dbt_dag.py     # runs dbt after ETL DAG succeeds
-├── dbt/
-│   ├── models/
-│   │   ├── staging/
-│   │   │   ├── stg_weather.sql
-│   │   │   └── stg_weather.yml
-│   │   └── marts/
-│   │       ├── fct_weather_metrics.sql
-│   │       └── fct_weather_metrics.yml
-│   ├── snapshots/
-│   │   └── raw_weather_snapshot.sql
-│   ├── dbt_project.yml
-│   └── packages.yml
-├── README.md
-└── requirements.txt
+  dags/
+    weather_etl_dag.py
+    weather_dbt_dag.py
+  dbt/
+    models/
+    snapshots/
+    dbt_project.yml
+  README.md
+  requirements.txt
 ```
 
 No scratch notebooks, unused sample files, or committed credentials live in this repo.
