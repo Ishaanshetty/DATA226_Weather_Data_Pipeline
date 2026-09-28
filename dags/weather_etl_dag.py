@@ -94,13 +94,16 @@ def extract():
 
     for city in cities:
         params = {
-            "latitude": city["lat"],
-            "longitude": city["lon"],
-            "past_days": 60,
-            "forecast_days": 0,
-            "daily": ",".join(DAILY_FIELDS),
-            "timezone": "America/Los_Angeles",
-        }
+        "latitude": city["lat"],
+        "longitude": city["lon"],
+        "past_days": 60,
+        "forecast_days": 0,
+        "daily": ",".join(DAILY_FIELDS),
+        "timezone": "auto",
+        "temperature_unit": "fahrenheit",
+        "precipitation_unit": "inch",
+        "wind_speed_unit": "mph",
+    }
         response = hook.run(endpoint="/v1/forecast", data=params)
         response.raise_for_status()
         results.append({"city": city["name"], "data": response.json()})
