@@ -1,0 +1,28 @@
+version: 2
+
+sources:
+  - name: raw
+    database: DEMO_DB
+    schema: RAW
+    tables:
+      - name: weather_daily
+        description: Raw daily weather loaded by weather_etl_dag, one row per city per day.
+
+models:
+  - name: stg_weather
+    description: Cleaned daily weather. Sunshine and daylight converted from seconds to hours.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [city, weather_date]
+    columns:
+      - name: city
+        data_tests:
+          - not_null
+      - name: weather_date
+        data_tests:
+          - not_null
+      - name: temperature_2m_max
+        data_tests:
+          - dbt_utils.accepted_range:
+              min_value: -60
+              max_value: 140

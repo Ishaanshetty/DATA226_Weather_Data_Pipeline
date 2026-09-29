@@ -1,0 +1,14 @@
+weather_pipeline:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT', 'LLIVUEC-AT98743') }}"
+      user: "{{ env_var('SNOWFLAKE_USER', 'ISHAANSHETTY03') }}"
+      private_key_path: /opt/airflow/keys/rsa_key.p8
+      private_key_passphrase: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PASSPHRASE') }}"
+      role: ACCOUNTADMIN
+      database: DEMO_DB
+      warehouse: DEMO_WH
+      schema: ANALYTICS
+      threads: 4

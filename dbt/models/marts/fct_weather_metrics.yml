@@ -1,0 +1,28 @@
+version: 2
+
+models:
+  - name: fct_weather_metrics
+    description: >
+      One row per city per day with derived weather metrics, built on stg_weather.
+      Feeds the BI dashboard. Forecast miss rate and forecast drift are added once
+      the raw_weather_snapshot exists.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [city, weather_date]
+    columns:
+      - name: city
+        data_tests:
+          - not_null
+      - name: weather_date
+        data_tests:
+          - not_null
+      - name: dry_spell_days
+        data_tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 60
+      - name: comfort_streak_length
+        data_tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 60
