@@ -39,15 +39,23 @@ See `dbt/models/marts/fct_weather_metrics.sql` for full definitions.
 
 ```
 repo/
-  dags/
-    weather_etl_dag.py
-    weather_dbt_dag.py
-  dbt/
-    models/
-    snapshots/
-    dbt_project.yml
-  README.md
-  requirements.txt
+├── dags/
+│   ├── weather_etl_dag.py     # pulls Open-Meteo data, loads raw table
+│   └── weather_dbt_dag.py     # runs dbt after ETL DAG succeeds
+├── dbt/
+│   ├── models/
+│   │   ├── staging/
+│   │   │   ├── stg_weather.sql
+│   │   │   └── stg_weather.yml
+│   │   └── marts/
+│   │       ├── fct_weather_metrics.sql
+│   │       └── fct_weather_metrics.yml
+│   ├── snapshots/
+│   │   └── raw_weather_snapshot.sql
+│   ├── dbt_project.yml
+│   └── packages.yml
+├── README.md
+└── requirements.txt
 ```
 
 No scratch notebooks, unused sample files, or committed credentials live in this repo.
@@ -56,26 +64,50 @@ No scratch notebooks, unused sample files, or committed credentials live in this
 
 Raw and mart tables are keyed on `(city, date)`, one row per city per day. Key columns include daily max/min/mean temperature, apparent temperature, precipitation sum/hours/probability, wind speed, sunshine/daylight duration, UV index, and WMO weather code (decoded via a dbt seed table). See Section 5 of the [requirements doc](./docs/Prelim_Weather_Lab_BRD.pdf) for full column-level types, units, and constraints.
 
-## Setup
+## Setup (for a new teammate / fresh machine)
 
-### 1. Airflow Connections
-| Connection ID | Purpose |
-|---|---|
-| `open_meteo_api` | HTTP connection storing the Open-Meteo base URL (no auth required) |
-| `weather_warehouse` | Warehouse connection storing host, credentials, and database |
+Cloning the repo gets you the DAG and dbt code, but a few things are intentionally **not** in Git (credentials, and anything stored in this project's local Airflow/Postgres instance). Set these up once per machine:
 
-### 2. Airflow Variables
-| Variable | Purpose |
-|---|---|
-| `weather_cities` | JSON list of `{name, lat, lon}` for each tracked city — add a city by editing config, not code |
+### 1. Get the private key
+You need a Snowflake key pair registered to the account/user this project uses. Either:
+- Get a copy of the team's `rsa_key.p8` from a teammate (out of band — Slack/email, never Git), or
+- Generate your own key pair and have someone with `ACCOUNTADMIN` register your public key with `ALTER USER ... SET RSA_PUBLIC_KEY = '...'`.
 
-### 3. dbt Profile
-Configure your dbt profile to point at the same warehouse used by `weather_warehouse`. Run:
+Place the private key at `keys/rsa_key.p8` in the project root (this folder is gitignored).
+
+### 2. Create `.env`
+In the project root, create a file named `.env` (gitignored) with:
+```
+AIRFLOW_UID=50000
+SNOWFLAKE_PRIVATE_KEY_PASSPHRASE=<passphrase for rsa_key.p8, if it has one>
+```
+
+### 3. Start Docker
 ```bash
-dbt deps
-dbt run
-dbt test
-dbt snapshot
+docker compose up airflow-init
+docker compose up -d
+```
+Wait for the containers to finish installing packages (`docker compose exec airflow which dbt` should return a path once ready), then open the Airflow UI at `http://localhost:8081` (user/pass: `airflow` / `airflow`).
+
+### 4. Create Airflow Connections
+In the UI, go to **Admin → Connections → +** and add:
+
+| Connection Id | Connection Type | Fields |
+|---|---|---|
+| `open_meteo_api` | HTTP | Host: `api.open-meteo.com`, Schema: `https` |
+| `weather_warehouse` | Snowflake | Login, Account, Schema, Role, and an **Extra** JSON of: `{"private_key_file": "/opt/airflow/keys/rsa_key.p8", "private_key_file_pwd": "<same passphrase as .env>", "warehouse": "<warehouse>", "database": "<database>", "role": "<role>"}` |
+
+### 5. Create the Airflow Variable
+In the UI, go to **Admin → Variables → +**:
+
+| Key | Value |
+|---|---|
+| `weather_cities` | `[{"name": "New York", "lat": 40.7128, "lon": -74.0060}, {"name": "Los Angeles", "lat": 34.0522, "lon": -118.2437}]` |
+
+### 6. Run the pipeline
+Trigger `weather_etl_dag` in the UI once to load raw data, then run dbt:
+```bash
+docker compose exec airflow bash -c "cd /opt/airflow/dbt && dbt deps && dbt run && dbt test && dbt snapshot"
 ```
 
 ## Running the Pipeline
