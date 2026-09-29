@@ -64,7 +64,7 @@ No scratch notebooks, unused sample files, or committed credentials live in this
 
 Raw and mart tables are keyed on `(city, date)`, one row per city per day. Key columns include daily max/min/mean temperature, apparent temperature, precipitation sum/hours/probability, wind speed, sunshine/daylight duration, UV index, and WMO weather code (decoded via a dbt seed table). See Section 5 of the [requirements doc](./docs/Prelim_Weather_Lab_BRD.pdf) for full column-level types, units, and constraints.
 
-## Setup (for a new teammate / fresh machine)
+## Setup 
 
 Cloning the repo gets you the DAG and dbt code, but a few things are intentionally **not** in Git (credentials, and anything stored in this project's local Airflow/Postgres instance). Set these up once per machine:
 
