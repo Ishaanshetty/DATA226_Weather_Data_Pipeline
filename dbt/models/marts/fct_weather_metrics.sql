@@ -90,13 +90,13 @@ streaks as (
         *,
         case
             when is_dry_day = 1
-            then row_number() over (partition by city, dry_spell_group order by weather_date)
+            then row_number() over (partition by city, dry_spell_group, is_dry_day order by weather_date)
             else 0
         end as dry_spell_days,
 
         case
             when is_comfortable_day = 1
-            then row_number() over (partition by city, comfort_streak_group order by weather_date)
+            then row_number() over (partition by city, comfort_streak_group, is_comfortable_day order by weather_date)
             else 0
         end as comfort_streak_length
 
