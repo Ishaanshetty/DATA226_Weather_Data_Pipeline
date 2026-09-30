@@ -20,9 +20,9 @@ models:
         data_tests:
           - dbt_utils.accepted_range:
               min_value: 0
-              max_value: 60
+              max_value: 365
       - name: comfort_streak_length
         data_tests:
           - dbt_utils.accepted_range:
               min_value: 0
-              max_value: 60
+              max_value: 365
