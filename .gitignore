@@ -219,3 +219,6 @@ __marimo__/
 
 # Keys
 keys/
+
+# macOS
+.DS_Store
