@@ -6,6 +6,7 @@ from airflow.decorators import task
 from airflow.models import Variable
 from airflow.providers.http.hooks.http import HttpHook
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 
 TARGET_TABLE = "RAW.WEATHER_DAILY"
 SNOWFLAKE_CONN_ID = "weather_warehouse"
@@ -188,4 +189,11 @@ with DAG(
 
     extracted_data = extract()
     transformed_records = transform(extracted_data)
-    load(transformed_records)
+    load_task = load(transformed_records)
+
+    trigger_dbt = TriggerDagRunOperator(
+        task_id="trigger_dbt",
+        trigger_dag_id="weather_dbt_dag",
+    )
+
+    load_task >> trigger_dbt
