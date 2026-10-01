@@ -64,7 +64,7 @@ No scratch notebooks, unused sample files, or committed credentials live in this
 
 Raw and mart tables are keyed on `(city, date)`, one row per city per day. Key columns include daily max/min/mean temperature, apparent temperature, precipitation sum/hours/probability, wind speed, sunshine/daylight duration, UV index, and WMO weather code (decoded via a dbt seed table). See Section 5 of the [requirements doc](./docs/Prelim_Weather_Lab_BRD.pdf) for full column-level types, units, and constraints.
 
-## Setup 
+## Setup (for a new teammate / fresh machine)
 
 Cloning the repo gets you the DAG and dbt code, but a few things are intentionally **not** in Git (credentials, and anything stored in this project's local Airflow/Postgres instance). Set these up once per machine:
 
@@ -112,19 +112,24 @@ docker compose exec airflow bash -c "cd /opt/airflow/dbt && dbt deps && dbt run 
 
 ## Running the Pipeline
 
-1. Trigger (or wait for the schedule to trigger) `weather_etl_dag` — fetches and loads raw weather data.
-2. On success, `weather_dbt_dag` is triggered automatically and runs `dbt run`, `dbt test`, `dbt snapshot`.
-3. The BI dashboard reads from `fct_weather_metrics`, refreshed after every dbt run.
+1. Trigger `weather_etl_dag` in the Airflow UI — fetches and loads raw weather data into `RAW.WEATHER_DAILY`.
+2. Trigger `weather_dbt_dag` — runs `dbt deps`, `dbt run`, `dbt test`, `dbt snapshot` in sequence, rebuilding `fct_weather_metrics` and the raw snapshot.
+3. The BI dashboard reads from `fct_weather_metrics`; refresh the dashboard after step 2 to see updated numbers.
 
 Re-running the ETL DAG for the same day/hour updates existing rows rather than duplicating them (idempotent upsert with rollback-and-retry on failure).
 
 ## Dashboard
 
-The dashboard lets a viewer filter by city and date range and reads four views:
-- Temperature line chart with 7-day moving average overlaid
-- Temperature anomaly bar chart (colored above/below zero)
-- Rolling 7-day rainfall area chart
-- Dry-spell-length indicator/table
+Built in Preset on top of `fct_weather_metrics`, split across two rows of charts comparing New York and Los Angeles:
+
+- **Average Comfort Days** (LA vs. NYC) — single-value cards
+- **Average Temp by City** — line chart, LA vs. NY over time
+- **Temperature Anomalies** — bar chart, NY vs. LA, lower is better
+- **Rolling 7-Day Windspeed** — bar chart, NY vs. LA
+- **Feels Like Temp vs. Actual Temp** — area chart, temperature delta over time
+- **Weekly Avg Sunshine Ratio** — bar chart, NYC vs. LA
+
+Preset connects to Snowflake over a SQLAlchemy URI with username/password auth, since Preset's basic connection form doesn't support the key-pair auth used by Airflow and dbt.
 
 ## Future Work
 
